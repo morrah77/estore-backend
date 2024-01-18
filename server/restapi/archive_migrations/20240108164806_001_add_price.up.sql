@@ -1,0 +1,1 @@
+alter table products add column price numeric(15,2) default 0;

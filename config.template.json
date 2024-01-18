@@ -1,0 +1,17 @@
+{
+  "OAuthState":"your_state",
+  "OAuthClientID":"your_client_id",
+  "OAuthClientSecret":"your_client_secret",
+  "OAuthIssuer":"https://accounts.google.com",
+  "OAuthAuthURL":"https://accounts.google.com/o/oauth2/auth",
+  "OAuthTokenURL":"https://oauth2.googleapis.com/token",
+  "OAuthUserInfoURL":"https://www.googleapis.com/oauth2/v3/userinfo",
+  "OAuthCallbackURL":"https://localhost:8443/auth/cb",
+  "ACL": {
+    "admin":["your_email@gmail.com"]
+  },
+  "DBDriver": "sqlite",
+  "DBConnectionString":"file:data/eshop.sqlite?_foreign_keys=true",
+  "LogLevel": "DEBUG",
+  "AccessControlAllowOrigin": "*"
+}

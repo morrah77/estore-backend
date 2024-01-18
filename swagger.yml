@@ -1,0 +1,837 @@
+consumes:
+    - application/json
+info:
+    description: 'Capstone project: back-end'
+    title: E-Store Back-end
+    version: 1.0.0
+security:
+    - OauthSecurity:
+          - user
+paths:
+    /login:
+        get:
+            tags:
+                - auth
+            operationId: login
+            summary: Login through oauth2 server
+            security: [ ]
+            responses:
+                200:
+                    description: Login
+                    schema:
+                        $ref: "#/definitions/principal"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+    /auth/cb:
+        get:
+            tags:
+                - auth
+            operationId: getAccessToken
+            summary: Obtain access token
+            security: [ ]
+            responses:
+                200:
+                    description: Login
+                    schema:
+                        $ref: "#/definitions/principal"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+    /products:
+        get:
+            tags:
+                - products
+            operationId: getProducts
+            summary: List products
+            security: [ ]
+            parameters:
+                - name: limit
+                  in: query
+                  type: integer
+                  format: int32
+                  default: 24
+                - name: offset
+                  in: query
+                  type: integer
+                  format: int64
+                - name: search
+                  in: query
+                  type: string
+                - name: categoryIds
+                  in: query
+                  type: array
+                  collectionFormat: csv
+                  items:
+                    type: integer
+                    format: int64
+            responses:
+                200:
+                    description: Get product list
+                    schema:
+                        type: array
+                        items:
+                            $ref: "#/definitions/product"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        post:
+            tags:
+                - products
+            operationId: addProduct
+            summary: Add product
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/product"
+            responses:
+                201:
+                    description: Created
+                    schema:
+                        $ref: "#/definitions/product"
+                default:
+                    description: error
+                    schema:
+                        $ref: "#/definitions/error"
+    /products/{id}:
+        parameters:
+            - type: integer
+              format: int64
+              name: id
+              in: path
+              required: true
+        delete:
+            tags:
+                - product
+            operationId: deleteProduct
+            summary: Delete product by ID
+            security:
+                - OauthSecurity:
+                      - admin
+            responses:
+                204:
+                    description: Deleted
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        put:
+            tags:
+                - product
+            operationId: editProduct
+            summary: Edit product by ID
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/product"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/product"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        get:
+            tags:
+                - product
+            operationId: getProduct
+            summary: Get product by ID
+            security: [ ]
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/product"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+    /orders:
+        get:
+            tags:
+                - orders
+            operationId: listOrders
+            summary: List orders
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: limit
+                  in: query
+                  type: integer
+                  format: int32
+                  default: 24
+                - name: offset
+                  in: query
+                  type: integer
+                  format: int64
+            responses:
+                200:
+                    description: Get order list
+                    schema:
+                        type: array
+                        items:
+                            $ref: "#/definitions/order"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        post:
+            tags:
+                - orders
+            operationId: addOrder
+            summary: Add order
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/order"
+            responses:
+                201:
+                    description: Created
+                    schema:
+                        $ref: "#/definitions/order"
+                default:
+                    description: error
+                    schema:
+                        $ref: "#/definitions/error"
+    /orders/{id}:
+        parameters:
+            - type: integer
+              format: int64
+              name: id
+              in: path
+              required: true
+        delete:
+            tags:
+                - order
+            operationId: deleteOrder
+            summary: Delete order by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                204:
+                    description: Deleted
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        put:
+            tags:
+                - order
+            operationId: editOrder
+            summary: Edit order by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/order"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/order"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        get:
+            tags:
+                - order
+            operationId: getOrder
+            summary: Get order by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/order"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+                        
+    /users:
+        get:
+            tags:
+                - users
+            operationId: listUsers
+            summary: List users
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: limit
+                  in: query
+                  type: integer
+                  format: int32
+                  default: 24
+                - name: offset
+                  in: query
+                  type: integer
+                  format: int64
+                - name: search
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: Get user list
+                    schema:
+                        type: array
+                        items:
+                            $ref: "#/definitions/user"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        post:
+            tags:
+                - users
+            operationId: addUser
+            summary: Add user
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/user"
+            responses:
+                201:
+                    description: Created
+                    schema:
+                        $ref: "#/definitions/user"
+                default:
+                    description: error
+                    schema:
+                        $ref: "#/definitions/error"
+    /users/{id}:
+        parameters:
+            - type: integer
+              format: int64
+              name: id
+              in: path
+              required: true
+        delete:
+            tags:
+                - user
+            operationId: deleteUser
+            summary: Delete user by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                204:
+                    description: Deleted
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        put:
+            tags:
+                - user
+            operationId: editUser
+            summary: Edit user by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/user"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/user"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        get:
+            tags:
+                - user
+            operationId: getUser
+            summary: Get user by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/user"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+                        
+    /payments:
+        get:
+            tags:
+                - payments
+            operationId: listPayments
+            summary: List payments
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: limit
+                  in: query
+                  type: integer
+                  format: int32
+                  default: 24
+                - name: offset
+                  in: query
+                  type: integer
+                  format: int64
+            responses:
+                200:
+                    description: Get payment list
+                    schema:
+                        type: array
+                        items:
+                            $ref: "#/definitions/payment"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        post:
+            tags:
+                - payments
+            operationId: addPayment
+            summary: Add payment
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/payment"
+            responses:
+                201:
+                    description: Created
+                    schema:
+                        $ref: "#/definitions/payment"
+                default:
+                    description: error
+                    schema:
+                        $ref: "#/definitions/error"
+    /payments/{id}:
+        parameters:
+            - type: integer
+              format: int64
+              name: id
+              in: path
+              required: true
+        delete:
+            tags:
+                - payment
+            operationId: deletePaymet
+            summary: Delete payment by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                204:
+                    description: Deleted
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        put:
+            tags:
+                - payment
+            operationId: editPayment
+            summary: Edit payment by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/payment"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/payment"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        get:
+            tags:
+                - payment
+            operationId: getPayment
+            summary: Get payment by ID
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/payment"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+    /categories:
+        get:
+            tags:
+                - categories
+            operationId: listCategories
+            summary: List categories
+            security: [ ]
+            parameters:
+                - name: limit
+                  in: query
+                  type: integer
+                  format: int32
+                  default: 24
+                - name: offset
+                  in: query
+                  type: integer
+                  format: int64
+                - name: search
+                  in: query
+                  type: string
+            responses:
+                200:
+                    description: Get category list
+                    schema:
+                        type: array
+                        items:
+                            $ref: "#/definitions/category"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        post:
+            tags:
+                - categories
+            operationId: addCategory
+            summary: Add category
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/category"
+            responses:
+                201:
+                    description: Created
+                    schema:
+                        $ref: "#/definitions/category"
+                default:
+                    description: error
+                    schema:
+                        $ref: "#/definitions/error"
+    /categories/{id}:
+        parameters:
+            - type: integer
+              format: int64
+              name: id
+              in: path
+              required: true
+        delete:
+            tags:
+                - category
+            operationId: deleteCategory
+            summary: Delete category by ID
+            security:
+                - OauthSecurity:
+                      - admin
+            responses:
+                204:
+                    description: Deleted
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        put:
+            tags:
+                - category
+            operationId: editCategory
+            summary: Edit category by ID
+            security:
+                - OauthSecurity:
+                      - admin
+            parameters:
+                - name: body
+                  in: body
+                  schema:
+                      $ref: "#/definitions/category"
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/category"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+        get:
+            tags:
+                - category
+            operationId: getCategory
+            summary: Get category by ID
+            security: [ ]
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/category"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
+
+produces:
+    - application/json
+schemes:
+    - https
+    - http
+definitions:
+    error:
+        type: object
+        required:
+            - message
+        properties:
+            httpcode:
+                type: integer
+                format: int64
+            message:
+                type: string
+    principal:
+        type: object
+        $ref: "#/definitions/user_info"
+
+    user_info:
+        type: object
+        properties:
+            accessToken:
+              type: string
+            sub:
+                type: string
+            name:
+              type: string
+            givenName:
+              type: string
+            familyName:
+              type: string
+            picture:
+              type: string
+            email:
+              type: string
+            emailVerified:
+              type: boolean
+            locale:
+              type: string
+            user:
+              type: object
+              $ref: "#/definitions/user"
+            ACLRole:
+              type: string
+
+    product:
+        type: object
+        required:
+            - title
+            - description
+        properties:
+            id:
+                type: integer
+                format: int64
+                readOnly: true
+            title:
+                type: string
+                minLength: 1
+            description:
+                type: string
+                minLength: 1
+            images:
+                type: array
+                items:
+                    type: string
+            categoryIds:
+                type: array
+                items:
+                    type: integer
+                    format: int64
+            price:
+                type: number
+            numberInStock:
+                type: integer
+    orderedProduct:
+        type: object
+        required:
+            - productId
+            - quantity
+            - totalPrice
+        properties:
+            productId:
+                type: integer
+                format: int64
+            productName:
+              type: string
+              readOnly: true
+            inStock:
+              type: boolean
+              readOnly: true
+            orderId:
+                type: integer
+                format: int64
+                readOnly: true
+            quantity:
+                type: integer
+            totalPrice:
+                type: number
+    order:
+        type: object
+        required:
+            - products
+            - totalPrice
+            - deliveryInfo
+        properties:
+            id:
+                type: integer
+                format: int64
+                readOnly: true
+            userId:
+                type: integer
+                format: int64
+            dateCreated:
+                type: integer
+                format: int64
+                readOnly: true
+            dateUpdated:
+                type: integer
+                format: int64
+            products:
+                type: array
+                items:
+                    $ref: "#/definitions/orderedProduct"
+            totalPrice:
+                type: number
+            status:
+                type: string
+            deliveryInfo:
+                type: string
+                minLength: 10
+    user:
+        type: object
+        required:
+            - email
+        properties:
+            id:
+                type: integer
+                format: int64
+                readOnly: true
+            email:
+                type: string
+            name:
+                type: string
+            dateCreated:
+                type: integer
+                format: int64
+                readOnly: true
+            dateUpdated:
+                type: integer
+                format: int64
+    payment:
+        type: object
+        required:
+            - orderId
+            - amount
+        properties:
+            id:
+                type: integer
+                format: int64
+                readOnly: true
+            userId:
+                type: integer
+                format: int64
+            orderId:
+                type: integer
+                format: int64
+            amount:
+                type: number
+            status:
+                type: string
+            dateCreated:
+                type: integer
+                format: int64
+                readOnly: true
+            dateUpdated:
+                type: integer
+                format: int64
+    category:
+        type: object
+        required:
+            - title
+        properties: 
+            id:
+                type: integer
+                format: int64
+                readOnly: true
+            title:
+                type: string
+                minLength: 1
+            description:
+                type: string
+                minLength: 1
+            
+securityDefinitions:
+    OauthSecurity:
+        type: oauth2
+        flow: accessCode
+        authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth'
+        tokenUrl: 'https://oauth2.googleapis.com/token'
+        scopes:
+            admin: Admin scope
+            user: User scope
+            private: Private scope
+swagger: "2.0"
