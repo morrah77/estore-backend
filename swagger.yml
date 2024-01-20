@@ -397,7 +397,25 @@ paths:
                     description: Error
                     schema:
                         $ref: "#/definitions/error"
-                        
+    /user:
+        get:
+            tags:
+                - user
+            operationId: getOwnUser
+            summary: Get own user information
+            security:
+                - OauthSecurity:
+                      - admin
+                      - private
+            responses:
+                200:
+                    description: OK
+                    schema:
+                        $ref: "#/definitions/user"
+                default:
+                    description: Error
+                    schema:
+                        $ref: "#/definitions/error"
     /payments:
         get:
             tags:

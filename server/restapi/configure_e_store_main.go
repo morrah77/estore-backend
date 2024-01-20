@@ -338,6 +338,16 @@ func configureAPI(api *operations.EStoreMainAPI) http.Handler {
 		return user.NewGetUserOK().WithPayload(result)
 	})
 
+	api.UserGetOwnUserHandler = user.GetOwnUserHandlerFunc(func(params user.GetOwnUserParams, principal *models.Principal) middleware.Responder {
+		var result *models.User
+		result, err := getOwnUserInfo(&params, principal)
+		if err != nil {
+			return user.NewGetOwnUserDefault(int(err.Code())).
+				WithPayload(&models.Error{Httpcode: int64(err.Code()), Message: swag.String(err.Error())})
+		}
+		return user.NewGetOwnUserOK().WithPayload(result)
+	})
+
 	api.UsersListUsersHandler = users.ListUsersHandlerFunc(func(params users.ListUsersParams, principal *models.Principal) middleware.Responder {
 		Logger.Debug("Calling allUsers with limit %s, offset %s, search %s",
 			params.Limit, params.Offset, params.Search)

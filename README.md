@@ -89,5 +89,5 @@ env GOOS=windows GOARCH=amd64 go build -o ./bin/server.exe ./server/cmd/e-store-
 
 ##Run
 
-./bin/server --port 8080 --tls-certificate ./certs/server.crt --tls-key ./certs/server.key --tls-port 8443
+bin\server.exe --port 8080 --tls-certificate ./certs/server.crt --tls-key ./certs/server.key --tls-port 8443
 

@@ -102,6 +102,23 @@ func getUser(params *user.GetUserParams, principal *models.Principal) (result *m
 	return result, nil
 }
 
+func getOwnUserInfo(params *user.GetOwnUserParams, principal *models.Principal) (result *models.User, err errors.Error) {
+	Logger.Debug("\ngetOwnUserInfo: principal: %s\nprincipal.User.ID: %d\n", principal, principal.User.ID)
+	err = isPrincipalOwnerOrAdmin(principal, principal.User.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	dbModel := dbModels.User{
+		ID:    principal.User.ID,
+		Name:  principal.User.Name,
+		Email: *principal.User.Email,
+	}
+
+	result = dbModel.ToDTO()
+	return result, nil
+}
+
 func getUserByEmail(email string) (result *models.User, err errors.Error) {
 	dbModel := new(dbModels.User)
 

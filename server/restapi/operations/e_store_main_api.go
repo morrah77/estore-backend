@@ -109,6 +109,9 @@ func NewEStoreMainAPI(spec *loads.Document) *EStoreMainAPI {
 		OrderGetOrderHandler: order.GetOrderHandlerFunc(func(params order.GetOrderParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation order.GetOrder has not yet been implemented")
 		}),
+		UserGetOwnUserHandler: user.GetOwnUserHandlerFunc(func(params user.GetOwnUserParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation user.GetOwnUser has not yet been implemented")
+		}),
 		PaymentGetPaymentHandler: payment.GetPaymentHandlerFunc(func(params payment.GetPaymentParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation payment.GetPayment has not yet been implemented")
 		}),
@@ -221,6 +224,8 @@ type EStoreMainAPI struct {
 	CategoryGetCategoryHandler category.GetCategoryHandler
 	// OrderGetOrderHandler sets the operation handler for the get order operation
 	OrderGetOrderHandler order.GetOrderHandler
+	// UserGetOwnUserHandler sets the operation handler for the get own user operation
+	UserGetOwnUserHandler user.GetOwnUserHandler
 	// PaymentGetPaymentHandler sets the operation handler for the get payment operation
 	PaymentGetPaymentHandler payment.GetPaymentHandler
 	// ProductGetProductHandler sets the operation handler for the get product operation
@@ -373,6 +378,9 @@ func (o *EStoreMainAPI) Validate() error {
 	}
 	if o.OrderGetOrderHandler == nil {
 		unregistered = append(unregistered, "order.GetOrderHandler")
+	}
+	if o.UserGetOwnUserHandler == nil {
+		unregistered = append(unregistered, "user.GetOwnUserHandler")
 	}
 	if o.PaymentGetPaymentHandler == nil {
 		unregistered = append(unregistered, "payment.GetPaymentHandler")
@@ -571,6 +579,10 @@ func (o *EStoreMainAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/orders/{id}"] = order.NewGetOrder(o.context, o.OrderGetOrderHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/user"] = user.NewGetOwnUser(o.context, o.UserGetOwnUserHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

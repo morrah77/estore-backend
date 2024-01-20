@@ -833,6 +833,37 @@ func init() {
         }
       ]
     },
+    "/user": {
+      "get": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Get own user information",
+        "operationId": "getOwnUser",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "security": [
@@ -2128,6 +2159,37 @@ func init() {
           "required": true
         }
       ]
+    },
+    "/user": {
+      "get": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "Get own user information",
+        "operationId": "getOwnUser",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/user"
+            }
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     },
     "/users": {
       "get": {
