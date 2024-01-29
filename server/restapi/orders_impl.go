@@ -19,7 +19,7 @@ func addOrder(params *orders.AddOrderParams, principal *models.Principal) (*mode
 		return nil, err
 	}
 	var item = params.Body
-	Logger.Debug("adding item %v\n")
+	Logger.Debug("adding item %v\n", item)
 	if item == nil {
 		return nil, errors.New(400, "DB item cannot be nil!")
 	}
