@@ -31,6 +31,10 @@ type Payment struct {
 	UserID int64
 
 	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+
+	CheckoutSessionID string `json:"checkout_session_id"`
+
+	PaymentIntentId string `json:"payment_intent_id"`
 }
 
 func NewPaymentFrom(dto *models.Payment) *Payment {

@@ -238,6 +238,83 @@ func init() {
         }
       ]
     },
+    "/checkout/session": {
+      "get": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Get checkout session",
+        "operationId": "getCheckoutSession",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "session_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get checkout session",
+            "schema": {
+              "$ref": "#/definitions/checkout_session"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Add checkout session",
+        "operationId": "addCheckoutSession",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/checkout_order"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/checkout_session_secret"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/login": {
       "get": {
         "security": [],
@@ -289,6 +366,25 @@ func init() {
             "type": "integer",
             "format": "int64",
             "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "id",
+              "date_created",
+              "date_updated"
+            ],
+            "type": "string",
+            "name": "orderBy",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "name": "order",
             "in": "query"
           }
         ],
@@ -1057,6 +1153,36 @@ func init() {
           "required": true
         }
       ]
+    },
+    "/webhooks/stripe/payments": {
+      "post": {
+        "security": [],
+        "tags": [
+          "webhooks",
+          "payments"
+        ],
+        "summary": "Process Stripe payment event",
+        "operationId": "processStripePayment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Stripe-Signature",
+            "in": "header",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Processed"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -1078,6 +1204,37 @@ func init() {
         "title": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "checkout_order": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "checkout_session": {
+      "type": "object",
+      "properties": {
+        "customer_email": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "checkout_session_secret": {
+      "type": "object",
+      "properties": {
+        "client_secret": {
+          "type": "string"
         }
       }
     },
@@ -1565,6 +1722,83 @@ func init() {
         }
       ]
     },
+    "/checkout/session": {
+      "get": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Get checkout session",
+        "operationId": "getCheckoutSession",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "session_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get checkout session",
+            "schema": {
+              "$ref": "#/definitions/checkout_session"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "OauthSecurity": [
+              "admin",
+              "private"
+            ]
+          }
+        ],
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Add checkout session",
+        "operationId": "addCheckoutSession",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/checkout_order"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/checkout_session_secret"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/login": {
       "get": {
         "security": [],
@@ -1616,6 +1850,25 @@ func init() {
             "type": "integer",
             "format": "int64",
             "name": "offset",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "id",
+              "date_created",
+              "date_updated"
+            ],
+            "type": "string",
+            "name": "orderBy",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "name": "order",
             "in": "query"
           }
         ],
@@ -2384,6 +2637,36 @@ func init() {
           "required": true
         }
       ]
+    },
+    "/webhooks/stripe/payments": {
+      "post": {
+        "security": [],
+        "tags": [
+          "webhooks",
+          "payments"
+        ],
+        "summary": "Process Stripe payment event",
+        "operationId": "processStripePayment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Stripe-Signature",
+            "in": "header",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Processed"
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -2405,6 +2688,37 @@ func init() {
         "title": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "checkout_order": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "checkout_session": {
+      "type": "object",
+      "properties": {
+        "customer_email": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "checkout_session_secret": {
+      "type": "object",
+      "properties": {
+        "client_secret": {
+          "type": "string"
         }
       }
     },

@@ -1,0 +1,1 @@
+alter table payments drop column client_secret;

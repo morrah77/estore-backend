@@ -6,24 +6,25 @@ import (
 	"estore-backend/server/models"
 	"estore-backend/server/restapi/operations/order"
 	"estore-backend/server/restapi/operations/orders"
+	"fmt"
 	"github.com/go-openapi/errors"
 	"github.com/uptrace/bun"
 	"log"
 	"time"
 )
 
-func addOrder(params *orders.AddOrderParams, principal *models.Principal) errors.Error {
+func addOrder(params *orders.AddOrderParams, principal *models.Principal) (*models.Order, errors.Error) {
 	isAdmin, err := isPrincipalAdmin(principal)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var item = params.Body
 	Logger.Debug("adding item %v\n")
 	if item == nil {
-		return errors.New(400, "DB item cannot be nil!")
+		return nil, errors.New(400, "DB item cannot be nil!")
 	}
 	if item.Products == nil || len(item.Products) <= 0 {
-		return errors.New(400, "Order product list cannot be empty!")
+		return nil, errors.New(400, "Order product list cannot be empty!")
 	}
 
 	// TODO consider using bun struct tags ",default:current_timestamp" for type time.Time
@@ -32,7 +33,7 @@ func addOrder(params *orders.AddOrderParams, principal *models.Principal) errors
 	// admins can add orders for any user; if the userID is zero, then user ID comes from the principal
 	// ordinarys user can add orders for themselves only; if the user ID is empty, then see above
 	if !isAdmin && item.UserID > 0 && item.UserID != principal.User.ID {
-		return errors.New(403, "Attempt to create order for non-own user!")
+		return nil, errors.New(403, "Attempt to create order for non-own user!")
 	}
 
 	if item.UserID < 1 {
@@ -49,13 +50,13 @@ func addOrder(params *orders.AddOrderParams, principal *models.Principal) errors
 
 	res, sqlErr := query.Exec(context.Background())
 	if sqlErr != nil {
-		return errors.New(500, "ERROR %v: Could not add order %s!\n", sqlErr, item)
+		return nil, errors.New(500, "ERROR %v: Could not add order %s!\n", sqlErr, item)
 	}
 
 	id, sqlErr := res.LastInsertId()
 	if sqlErr != nil {
 		log.Printf("ERROR %v: Could not find last insert ID for order %s!", sqlErr, item)
-		return errors.New(500, "ERROR: Could not add order %s!\n", item)
+		return nil, errors.New(500, "ERROR: Could not add order %s!\n", item)
 	}
 
 	dbModel.ID = id
@@ -72,7 +73,7 @@ func addOrder(params *orders.AddOrderParams, principal *models.Principal) errors
 				"ERROR: %v: Could not delete order %s (result: %s)\n",
 				sqlErr, id, dbModel.Products, sqlDelErr, dbModel, res)
 		}
-		return errors.New(500, "ERROR: Could not add order %d products %s!",
+		return nil, errors.New(500, "ERROR: Could not add order %d products %s!",
 			id, dbModel.Products)
 	}
 	if *totalPrice != *dbModel.TotalPrice {
@@ -82,11 +83,11 @@ func addOrder(params *orders.AddOrderParams, principal *models.Principal) errors
 		_, sqlErr = updQuery.Exec(context.Background())
 		if sqlErr != nil {
 			Logger.Error("ERROR %v:\nCould not update order %d total price to %f\n", sqlErr, id, totalPrice)
-			return errors.New(500, "ERROR: Could not update order %d total price to %f", id, totalPrice)
+			return nil, errors.New(500, "ERROR: Could not update order %d total price to %f", id, totalPrice)
 		}
 	}
 
-	return nil
+	return dbModel.ToDTO(), nil
 }
 
 func updateOrder(params *order.EditOrderParams, principal *models.Principal) errors.Error {
@@ -150,6 +151,25 @@ func updateOrder(params *order.EditOrderParams, principal *models.Principal) err
 	return nil
 }
 
+func updateDBOrder(dbModel *dbModels.Order) (*dbModels.Order, errors.Error) {
+	if dbModel == nil {
+		return nil, errors.New(500, "Empty order!")
+	}
+	nowUnixEpoch := time.Now().In(time.UTC).Unix()
+	dbModel.DateUpdated = nowUnixEpoch
+	query := db.NewUpdate().Where("id = ?", dbModel.ID).
+		Model(dbModel).ExcludeColumn("id").ExcludeColumn("date_created")
+	Logger.Debug("Built the query %s\n", query)
+
+	_, err := query.Exec(context.Background())
+	if err != nil {
+		Logger.Error("ERROR %v (%s): Could not update order %d!\n", err, err, dbModel.ID)
+		return nil, errors.New(500, "Could not update order %d!", dbModel.ID)
+	}
+
+	return dbModel, nil
+}
+
 func deleteOrder(params *order.DeleteOrderParams, principal *models.Principal) errors.Error {
 	err := isPrincipalOwnerOrAdmin(principal, params.ID)
 	if err != nil {
@@ -189,21 +209,30 @@ func getOrder(params *order.GetOrderParams, principal *models.Principal) (result
 		return nil, err
 	}
 
+	dbModel, err := getOrderFromDB(params.ID, isAdmin, principal.User.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result = dbModel.ToDTO()
+	return result, nil
+}
+
+func getOrderFromDB(orderId int64, isAdmin bool, userId int64) (*dbModels.Order, errors.Error) {
 	dbModel := new(dbModels.Order)
 
 	query := db.NewSelect().Model(dbModel)
-	query = queryOrder(query, isAdmin, principal.User.ID)
-	query.Where("id = ?", params.ID)
+	query = queryOrder(query, isAdmin, userId)
+	query.Where("id = ?", orderId)
 	Logger.Debug("Built the query %s\n", query)
 
 	sqlErr := query.Scan(context.Background())
 	if sqlErr != nil {
-		return nil, errors.New(500, "ERROR %v: Could not find order %d!\n", sqlErr, params.ID)
+		return nil, errors.New(500, "ERROR %v: Could not find order %d!\n", sqlErr, orderId)
 	}
 
 	Logger.Debug("Fetched an order %s\n", dbModel)
-	result = dbModel.ToDTO()
-	return result, nil
+	return dbModel, nil
 }
 
 func allOrders(params *orders.ListOrdersParams, principal *models.Principal) (result []*models.Order, err errors.Error) {
@@ -220,6 +249,13 @@ func allOrders(params *orders.ListOrdersParams, principal *models.Principal) (re
 	}
 	if params.Offset != nil {
 		query.Offset(int(*params.Offset))
+	}
+	if params.OrderBy != nil {
+		orderBy := "ASC"
+		if params.Order != nil {
+			orderBy = *params.Order
+		}
+		query.Order(fmt.Sprintf("%s %s", *params.OrderBy, orderBy))
 	}
 	Logger.Debug("Built the query %s\n", query)
 

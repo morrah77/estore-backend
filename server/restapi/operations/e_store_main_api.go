@@ -23,6 +23,7 @@ import (
 	"estore-backend/server/restapi/operations/auth"
 	"estore-backend/server/restapi/operations/categories"
 	"estore-backend/server/restapi/operations/category"
+	"estore-backend/server/restapi/operations/checkout"
 	"estore-backend/server/restapi/operations/order"
 	"estore-backend/server/restapi/operations/orders"
 	"estore-backend/server/restapi/operations/payment"
@@ -31,6 +32,7 @@ import (
 	"estore-backend/server/restapi/operations/products"
 	"estore-backend/server/restapi/operations/user"
 	"estore-backend/server/restapi/operations/users"
+	"estore-backend/server/restapi/operations/webhooks"
 )
 
 // NewEStoreMainAPI creates a new EStoreMain instance
@@ -57,6 +59,9 @@ func NewEStoreMainAPI(spec *loads.Document) *EStoreMainAPI {
 
 		CategoriesAddCategoryHandler: categories.AddCategoryHandlerFunc(func(params categories.AddCategoryParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation categories.AddCategory has not yet been implemented")
+		}),
+		CheckoutAddCheckoutSessionHandler: checkout.AddCheckoutSessionHandlerFunc(func(params checkout.AddCheckoutSessionParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation checkout.AddCheckoutSession has not yet been implemented")
 		}),
 		OrdersAddOrderHandler: orders.AddOrderHandlerFunc(func(params orders.AddOrderParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation orders.AddOrder has not yet been implemented")
@@ -106,6 +111,9 @@ func NewEStoreMainAPI(spec *loads.Document) *EStoreMainAPI {
 		CategoryGetCategoryHandler: category.GetCategoryHandlerFunc(func(params category.GetCategoryParams) middleware.Responder {
 			return middleware.NotImplemented("operation category.GetCategory has not yet been implemented")
 		}),
+		CheckoutGetCheckoutSessionHandler: checkout.GetCheckoutSessionHandlerFunc(func(params checkout.GetCheckoutSessionParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation checkout.GetCheckoutSession has not yet been implemented")
+		}),
 		OrderGetOrderHandler: order.GetOrderHandlerFunc(func(params order.GetOrderParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation order.GetOrder has not yet been implemented")
 		}),
@@ -138,6 +146,9 @@ func NewEStoreMainAPI(spec *loads.Document) *EStoreMainAPI {
 		}),
 		AuthLoginHandler: auth.LoginHandlerFunc(func(params auth.LoginParams) middleware.Responder {
 			return middleware.NotImplemented("operation auth.Login has not yet been implemented")
+		}),
+		WebhooksProcessStripePaymentHandler: webhooks.ProcessStripePaymentHandlerFunc(func(params webhooks.ProcessStripePaymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation webhooks.ProcessStripePayment has not yet been implemented")
 		}),
 
 		OauthSecurityAuth: func(token string, scopes []string) (*models.Principal, error) {
@@ -190,6 +201,8 @@ type EStoreMainAPI struct {
 
 	// CategoriesAddCategoryHandler sets the operation handler for the add category operation
 	CategoriesAddCategoryHandler categories.AddCategoryHandler
+	// CheckoutAddCheckoutSessionHandler sets the operation handler for the add checkout session operation
+	CheckoutAddCheckoutSessionHandler checkout.AddCheckoutSessionHandler
 	// OrdersAddOrderHandler sets the operation handler for the add order operation
 	OrdersAddOrderHandler orders.AddOrderHandler
 	// PaymentsAddPaymentHandler sets the operation handler for the add payment operation
@@ -222,6 +235,8 @@ type EStoreMainAPI struct {
 	AuthGetAccessTokenHandler auth.GetAccessTokenHandler
 	// CategoryGetCategoryHandler sets the operation handler for the get category operation
 	CategoryGetCategoryHandler category.GetCategoryHandler
+	// CheckoutGetCheckoutSessionHandler sets the operation handler for the get checkout session operation
+	CheckoutGetCheckoutSessionHandler checkout.GetCheckoutSessionHandler
 	// OrderGetOrderHandler sets the operation handler for the get order operation
 	OrderGetOrderHandler order.GetOrderHandler
 	// UserGetOwnUserHandler sets the operation handler for the get own user operation
@@ -244,6 +259,8 @@ type EStoreMainAPI struct {
 	UsersListUsersHandler users.ListUsersHandler
 	// AuthLoginHandler sets the operation handler for the login operation
 	AuthLoginHandler auth.LoginHandler
+	// WebhooksProcessStripePaymentHandler sets the operation handler for the process stripe payment operation
+	WebhooksProcessStripePaymentHandler webhooks.ProcessStripePaymentHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -328,6 +345,9 @@ func (o *EStoreMainAPI) Validate() error {
 	if o.CategoriesAddCategoryHandler == nil {
 		unregistered = append(unregistered, "categories.AddCategoryHandler")
 	}
+	if o.CheckoutAddCheckoutSessionHandler == nil {
+		unregistered = append(unregistered, "checkout.AddCheckoutSessionHandler")
+	}
 	if o.OrdersAddOrderHandler == nil {
 		unregistered = append(unregistered, "orders.AddOrderHandler")
 	}
@@ -376,6 +396,9 @@ func (o *EStoreMainAPI) Validate() error {
 	if o.CategoryGetCategoryHandler == nil {
 		unregistered = append(unregistered, "category.GetCategoryHandler")
 	}
+	if o.CheckoutGetCheckoutSessionHandler == nil {
+		unregistered = append(unregistered, "checkout.GetCheckoutSessionHandler")
+	}
 	if o.OrderGetOrderHandler == nil {
 		unregistered = append(unregistered, "order.GetOrderHandler")
 	}
@@ -408,6 +431,9 @@ func (o *EStoreMainAPI) Validate() error {
 	}
 	if o.AuthLoginHandler == nil {
 		unregistered = append(unregistered, "auth.LoginHandler")
+	}
+	if o.WebhooksProcessStripePaymentHandler == nil {
+		unregistered = append(unregistered, "webhooks.ProcessStripePaymentHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -514,6 +540,10 @@ func (o *EStoreMainAPI) initHandlerCache() {
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
+	o.handlers["POST"]["/checkout/session"] = checkout.NewAddCheckoutSession(o.context, o.CheckoutAddCheckoutSessionHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
 	o.handlers["POST"]["/orders"] = orders.NewAddOrder(o.context, o.OrdersAddOrderHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
@@ -578,6 +608,10 @@ func (o *EStoreMainAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/checkout/session"] = checkout.NewGetCheckoutSession(o.context, o.CheckoutGetCheckoutSessionHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/orders/{id}"] = order.NewGetOrder(o.context, o.OrderGetOrderHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -619,6 +653,10 @@ func (o *EStoreMainAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/login"] = auth.NewLogin(o.context, o.AuthLoginHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/webhooks/stripe/payments"] = webhooks.NewProcessStripePayment(o.context, o.WebhooksProcessStripePaymentHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

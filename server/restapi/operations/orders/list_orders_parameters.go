@@ -13,6 +13,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // NewListOrdersParams creates a new ListOrdersParams object
@@ -48,6 +49,14 @@ type ListOrdersParams struct {
 	  In: query
 	*/
 	Offset *int64
+	/*
+	  In: query
+	*/
+	Order *string
+	/*
+	  In: query
+	*/
+	OrderBy *string
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -68,6 +77,16 @@ func (o *ListOrdersParams) BindRequest(r *http.Request, route *middleware.Matche
 
 	qOffset, qhkOffset, _ := qs.GetOK("offset")
 	if err := o.bindOffset(qOffset, qhkOffset, route.Formats); err != nil {
+		res = append(res, err)
+	}
+
+	qOrder, qhkOrder, _ := qs.GetOK("order")
+	if err := o.bindOrder(qOrder, qhkOrder, route.Formats); err != nil {
+		res = append(res, err)
+	}
+
+	qOrderBy, qhkOrderBy, _ := qs.GetOK("orderBy")
+	if err := o.bindOrderBy(qOrderBy, qhkOrderBy, route.Formats); err != nil {
 		res = append(res, err)
 	}
 	if len(res) > 0 {
@@ -119,6 +138,70 @@ func (o *ListOrdersParams) bindOffset(rawData []string, hasKey bool, formats str
 		return errors.InvalidType("offset", "query", "int64", raw)
 	}
 	o.Offset = &value
+
+	return nil
+}
+
+// bindOrder binds and validates parameter Order from query.
+func (o *ListOrdersParams) bindOrder(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+
+	// Required: false
+	// AllowEmptyValue: false
+
+	if raw == "" { // empty values pass all other validations
+		return nil
+	}
+	o.Order = &raw
+
+	if err := o.validateOrder(formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateOrder carries on validations for parameter Order
+func (o *ListOrdersParams) validateOrder(formats strfmt.Registry) error {
+
+	if err := validate.EnumCase("order", "query", *o.Order, []interface{}{"asc", "desc"}, true); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// bindOrderBy binds and validates parameter OrderBy from query.
+func (o *ListOrdersParams) bindOrderBy(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+
+	// Required: false
+	// AllowEmptyValue: false
+
+	if raw == "" { // empty values pass all other validations
+		return nil
+	}
+	o.OrderBy = &raw
+
+	if err := o.validateOrderBy(formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateOrderBy carries on validations for parameter OrderBy
+func (o *ListOrdersParams) validateOrderBy(formats strfmt.Registry) error {
+
+	if err := validate.EnumCase("orderBy", "query", *o.OrderBy, []interface{}{"id", "date_created", "date_updated"}, true); err != nil {
+		return err
+	}
 
 	return nil
 }

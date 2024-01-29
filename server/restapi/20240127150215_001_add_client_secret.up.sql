@@ -1,0 +1,1 @@
+alter table payments add column client_secret text(255) default '';

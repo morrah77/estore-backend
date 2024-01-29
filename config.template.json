@@ -1,4 +1,6 @@
 {
+  "AppHost": "https://127.0.0.1:8443",
+  "AppFrontEndHost": "http://localhost:4200",
   "OAuthState":"your_state",
   "OAuthClientID":"your_client_id",
   "OAuthClientSecret":"your_client_secret",
@@ -13,5 +15,12 @@
   "DBDriver": "sqlite",
   "DBConnectionString":"file:data/eshop.sqlite?_foreign_keys=true",
   "LogLevel": "DEBUG",
-  "AccessControlAllowOrigin": "*"
+  "AccessControlAllowOrigin": "*",
+  "Payments": {
+    "Stripe": {
+      "secret": "",
+      "paymentWebhookSecret": "",
+      "paymentWebhookId": ""
+    }
+  }
 }

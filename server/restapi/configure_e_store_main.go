@@ -10,10 +10,12 @@ import (
 	"estore-backend/server/logger"
 	"estore-backend/server/restapi/operations/categories"
 	"estore-backend/server/restapi/operations/category"
+	"estore-backend/server/restapi/operations/checkout"
 	"estore-backend/server/restapi/operations/order"
 	"estore-backend/server/restapi/operations/orders"
 	"estore-backend/server/restapi/operations/user"
 	"estore-backend/server/restapi/operations/users"
+	"estore-backend/server/restapi/operations/webhooks"
 	"fmt"
 	"github.com/go-openapi/swag"
 	"github.com/uptrace/bun"
@@ -42,6 +44,10 @@ var apiConf = struct {
 }{}
 
 var ApiConfiguration struct {
+	AppHost string `json:"AppHost"`
+
+	AppFrontEndHost string `json:"AppFrontEndHost"`
+
 	// "state" request parameter used as an internal token in OAuth2 request exchanges
 	OAuthState string `json:"OAuthState"`
 
@@ -74,6 +80,14 @@ var ApiConfiguration struct {
 	LogLevel string
 
 	AccessControlAllowOrigin string
+
+	Payments struct {
+		Stripe struct {
+			Secret               string `json:"secret"`
+			PaymentWebhookSecret string `json:"paymentWebhookSecret"`
+			PaymentWebhookId     string `json:"paymentWebhookId"`
+		} `json:"Stripe"`
+	} `json:"Payments"`
 }
 
 var logLevel = logger.LOG_DEBUG
@@ -363,11 +377,13 @@ func configureAPI(api *operations.EStoreMainAPI) http.Handler {
 
 	api.OrdersAddOrderHandler = orders.AddOrderHandlerFunc(func(params orders.AddOrderParams, principal *models.Principal) middleware.Responder {
 		Logger.Debug("Calling addOrder with %v\n%s\n", params, params.Body)
-		if err := addOrder(&params, principal); err != nil {
+		orderDTO, err := addOrder(&params, principal)
+		if err != nil {
 			return orders.NewAddOrderDefault(int(err.Code())).
 				WithPayload(&models.Error{Httpcode: int64(err.Code()), Message: swag.String(err.Error())})
 		}
-		return orders.NewAddOrderCreated().WithPayload(params.Body)
+		Logger.Debug("Responding with Order %s", orderDTO)
+		return orders.NewAddOrderCreated().WithPayload(orderDTO)
 	})
 
 	api.OrderDeleteOrderHandler = order.DeleteOrderHandlerFunc(func(params order.DeleteOrderParams, principal *models.Principal) middleware.Responder {
@@ -408,6 +424,40 @@ func configureAPI(api *operations.EStoreMainAPI) http.Handler {
 	})
 
 	// Payments
+
+	//Checkout
+	api.CheckoutAddCheckoutSessionHandler = checkout.AddCheckoutSessionHandlerFunc(func(params checkout.AddCheckoutSessionParams, principal *models.Principal) middleware.Responder {
+		Logger.Debug("Calling createCheckoutSession with %v\n%s\n", params, params.Body)
+		clientSecret, err := createCheckoutSession(&params, principal)
+		if err != nil {
+			return checkout.NewAddCheckoutSessionDefault(int(err.Code())).
+				WithPayload(&models.Error{Httpcode: int64(err.Code()), Message: swag.String(err.Error())})
+		}
+		return checkout.NewAddCheckoutSessionCreated().WithPayload(&models.CheckoutSessionSecret{ClientSecret: *clientSecret})
+	})
+
+	api.CheckoutGetCheckoutSessionHandler = checkout.GetCheckoutSessionHandlerFunc(func(params checkout.GetCheckoutSessionParams, principal *models.Principal) middleware.Responder {
+		Logger.Debug("Calling retrieveCheckoutSession with SessionID %s",
+			params.SessionID)
+		result, err := retrieveCheckoutSession(&params, principal)
+		if err != nil {
+			return checkout.NewGetCheckoutSessionDefault(int(err.Code())).
+				WithPayload(&models.Error{Httpcode: int64(err.Code()), Message: swag.String(err.Error())})
+		}
+		return checkout.NewGetCheckoutSessionOK().WithPayload(result)
+	})
+
+	// Stripe payment webhook
+	api.WebhooksProcessStripePaymentHandler = webhooks.ProcessStripePaymentHandlerFunc(func(params webhooks.ProcessStripePaymentParams) middleware.Responder {
+		Logger.Debug("Calling WebhooksProcessStripePaymentHandler with Stripe Signature %s",
+			params.StripeSignature)
+		err := processStripePaymentEvent(&params)
+		if err != nil {
+			return webhooks.NewProcessStripePaymentDefault(int(err.Code())).
+				WithPayload(&models.Error{Httpcode: int64(err.Code()), Message: swag.String(err.Error())})
+		}
+		return webhooks.NewProcessStripePaymentOK()
+	})
 
 	api.PreServerShutdown = func() {}
 
