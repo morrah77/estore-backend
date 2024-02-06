@@ -14,10 +14,7 @@ import (
 )
 
 func createCheckoutSession(params *checkout.AddCheckoutSessionParams, principal *models.Principal) (*string, errors.Error) {
-	err := isPrincipalOwnerOrAdmin(principal, *params.Body.ID)
-	if err != nil {
-		return nil, err
-	}
+	// reject unregistered users, restrict further queries by user's ID for non-admin users
 	isAdmin, err := isPrincipalAdmin(principal)
 	if err != nil {
 		return nil, err

@@ -54,6 +54,13 @@ func authenticate(token string, scopes []string) (*models.UserInfo, error) {
 		return nil, fmt.Errorf("could not validate token. Error: %v", err)
 	}
 	Logger.Debug("auth_impl authenticate\nGot user info: %s\n", info)
+	userDTO, err := registerUserIfNeeded(info)
+	if err != nil {
+		Logger.Info("Could not register user %s; error: %s", info, err.Error())
+	} else {
+		Logger.Debug("Registered user %s", userDTO)
+		info.User = userDTO
+	}
 	if isUser(scopes) {
 		// the endpoint requested authorization is in the user scope, allowing
 		Logger.Debug("auth_impl authenticate\nScopes: %s. Allowing.", scopes)

@@ -30,9 +30,12 @@ func addDBUser(item *models.User) errors.Error {
 	query := db.NewInsert().Model(dbModel).ExcludeColumn("id")
 	Logger.Debug("Built the query %s\n", query)
 
-	_, err := query.Exec(context.Background())
+	res, err := query.Exec(context.Background())
 	if err != nil {
 		return errors.New(500, "ERROR %v: Could not add user %s!\n", err, item)
+	}
+	if id, err := res.LastInsertId(); err != nil {
+		item.ID = id
 	}
 	return nil
 }
